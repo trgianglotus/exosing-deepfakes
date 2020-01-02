@@ -13,7 +13,7 @@ import numpy as np
 from py_utils.face_utils import lib
 from py_utils.vid_utils import proc_vid as pv
 import logging
-
+import random
 
 
 print('***********')
@@ -27,8 +27,12 @@ sample_num = 10
 
 # Employ dlib to extract face area and landmark points
 pwd = os.path.dirname(__file__)
+print(pwd)
 front_face_detector = dlib.get_frontal_face_detector()
-lmark_predictor = dlib.shape_predictor(pwd + '/dlib_model/shape_predictor_68_face_landmarks.dat')
+# lmark_predictor = dlib.shape_predictor(pwd + '/dlib_model/shape_predictor_68_face_landmarks.dat')
+
+lmark_predictor = dlib.shape_predictor('dlib_model/shape_predictor_68_face_landmarks.dat')
+
 
 tfconfig = tf.ConfigProto(allow_soft_placement=True)
 tfconfig.gpu_options.allow_growth=True
@@ -85,11 +89,16 @@ def run(input_dir):
                 prob = -1
             else:
                 prob = im_test(im)
+            logging.info('Prob = ' + str(prob))
+            prob_list.append(prob)
+            print('Prob: ' + str(prob))
 
         elif suffix.lower() in ['mp4', 'avi', 'mov']:
             # Parse video
             imgs, frame_num, fps, width, height = pv.parse_vid(f_path)
             probs = []
+            imgs = random.choices(imgs, k=100)
+
             for fid, im in enumerate(imgs):
                 logging.info('Frame ' + str(fid))
                 prob = im_test(im)
@@ -103,9 +112,9 @@ def run(input_dir):
             else:
                 prob = np.mean(sorted(probs, reverse=True)[:int(frame_num / 3)])
 
-        logging.info('Prob = ' + str(prob))
-        prob_list.append(prob)
-        print('Prob: ' + str(prob))
+            logging.info('Prob = ' + str(prob))
+            prob_list.append(prob)
+            print('Prob: ' + str(prob))
 
     sess.close()
     return prob_list
